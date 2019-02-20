@@ -1,0 +1,8 @@
+/node_modules
+
+.DS_Store
+.env
+/configs/config.*.js
+/data
+
+custom.js

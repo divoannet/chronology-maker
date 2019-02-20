@@ -1,0 +1,20 @@
+{
+  "name": "chronology-maker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scrap": "node scrap.js",
+    "format": "node format.js",
+    "addMembers": "node addMembers.js",
+    "sort": "node sort.js",
+    "custom": "node custom.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "dotenv": "^6.2.0",
+    "needle": "^2.2.4"
+  }
+}
