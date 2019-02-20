@@ -6,7 +6,7 @@
   "scripts": {
     "scrap": "node scrap.js",
     "format": "node format.js",
-    "addMembers": "node addMembers.js",
+    "characters": "node characters.js",
     "sort": "node sort.js",
     "custom": "node custom.js"
   },

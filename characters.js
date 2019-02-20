@@ -14,13 +14,13 @@ const data = require(outputPath);
         return;
     }
 
-    getMembers(data).then(result => {
+    getCharacters(data).then(result => {
         require('fs').writeFileSync(outputPath, JSON.stringify(result, null, 4));
         console.log("\x1b[32m", `--- File ${config.forumName}.json updated---`);
     });
 })();
 
-async function getMembers(data) {
+async function getCharacters(data) {
     const newData = [];
 
     for (let i = 0; i < data.length; i++) {
@@ -28,23 +28,25 @@ async function getMembers(data) {
             newData.push(data[i]);
             continue;
         }
-        if (data[i].members && data[i].members.length > 1) {
-            // todo: think about same characters with different names
-            newData.push(data[i]);
-            continue;
-        }
+        const charCount = data[i].characters ? data[i].characters.length : 0;
         const topicData = await needle('get', data[i].url);
         const $ = cheerio.load(topicData.body);
-        const members = [];
+        const characters = data[i].characters || [];
         $('.pa-author').each((i, el) => {
             const author = $(el).text().substring(7);
-            if (!result.includes(author) && !config.EXCLUDED_USERS.includes(author)) {
-                result.push(author);
+            const character = config.replace && Object.keys(config.replace).includes(author)
+                ? config.replace[author]
+                : author;
+            if (!characters.includes(character) && !process.env.EXCLUDED_USERS.includes(character)) {
+                characters.push(character);
             }
         });
+        if (charCount + characters.length < 2) {
+            console.log("\x1b[33m", `--Topic ${data[i].url} has ${characters.length} characters`);
+        }
         newData.push({
             ...data[i],
-            members
+            characters
         });
     }
 

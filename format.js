@@ -47,7 +47,7 @@ function getTitle(str) {
 }
 
 function formatDate(date) {
-    if (!config.FORMAT_DATE) {
+    if (!process.env.FORMAT_DATE) {
         return date;
     }
     if (!date) {
@@ -55,7 +55,12 @@ function formatDate(date) {
     }
     const arr = date.split('.');
     if (arr.length === 3) {
-        return `${arr[0].padStart(2,'0')}.${arr[1].padStart(2,'0')}.${arr[2].length === 2 ? arr[2].padStart(4, config.DATE_PREFIX) : arr[2]}`;
+        const day = arr[0].padStart(2,'0');
+        const month = arr[1].padStart(2,'0');
+        const year = arr[2].length === 2
+            ? arr[2].padStart(4, process.env.DATE_PREFIX)
+            : arr[2];
+        return `${day}.${month}.${year}`;
     }
     return date;
 };
