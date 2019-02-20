@@ -79,7 +79,7 @@ function getForumTopic($, forum) {
 
 function getMergedData(newData) {
   if (!fs.existsSync(outputPath)) {
-    return newData;
+    return newData.filter(topic => !topic.remove);
   }
 
   const data = require(outputPath);

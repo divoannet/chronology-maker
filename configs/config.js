@@ -18,5 +18,8 @@ module.exports = {
             id: 'remove',
             remove: true
         }
-    ]
+    ],
+    "replace": {
+        "oldCharName": "newCharName"
+    }
 };
