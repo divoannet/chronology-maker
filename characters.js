@@ -28,10 +28,14 @@ async function getCharacters(data) {
             newData.push(data[i]);
             continue;
         }
+        if (data[i].characters && Array.isArray(data[i].characters)) {
+            newData.push(data[i]);
+            continue;
+        }
         const charCount = data[i].characters ? data[i].characters.length : 0;
         const topicData = await needle('get', data[i].url);
         const $ = cheerio.load(topicData.body);
-        const characters = data[i].characters || [];
+        const characters = [];
         $('.pa-author').each((i, el) => {
             const author = $(el).text().substring(7);
             const character = config.replace && Object.keys(config.replace).includes(author)

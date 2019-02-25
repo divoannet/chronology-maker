@@ -65,14 +65,18 @@ function getForumTopic($, forum) {
       links.push($(row).find('a')[0]);
     });
     links.forEach(link => {
-        data.push({
-          status: forum.id,
-          url: $(link).attr('href'),
-          title: $(link).text()
-        });
-        if (forum.remove) {
-          data[data.length - 1].remove = true;
-        }
+      const url = $(link).attr('href');
+      if (config.ignore.includes(url)) {
+        return;
+      }
+      data.push({
+        status: forum.id,
+        url: $(link).attr('href'),
+        title: $(link).text()
+      });
+      if (forum.remove) {
+        data[data.length - 1].remove = true;
+      }
     });
     return data;
 }

@@ -21,5 +21,8 @@ module.exports = {
     ],
     "replace": {
         "oldCharName": "newCharName"
-    }
+    },
+    "ignore": [
+        "http://link_to_ignored_topic"
+    ]
 };
