@@ -70,13 +70,24 @@ module.exports = async function scrapDomain(oldData) {
     console.log(`   `);
     console.log(`3. Update characters`);
 
+    let percentes = 0;
+
     for (let i = 0; i < data.length; i++) {
+        const progress = Math.round((100 * i) / data.length);
+        if (progress >= percentes + 10 && progress !== percentes) {
+            console.log(`      ${progress}%`.grey);
+            percentes = progress;
+        }
+
         const topic = data[i];
         if (!topic.url || topic.url === '') {
             continue;
         }
 
         if (topic.characters && !config.updateStatus.includes(topic.status)) {
+            if (topic.characters.length < 2) {
+                console.log(`   ${topic.url}  |  in ${topic.title} only ${topic.characters} character/s`);
+            }
             continue;
         }
 
@@ -100,6 +111,9 @@ module.exports = async function scrapDomain(oldData) {
                 topic.characters.push(character);
             }
         });
+        if (topic.characters.length < 2) {
+            console.log(`   ${topic.url}  |  in ${topic.title} only ${topic.characters} character/s`);
+        }
     }
 
     return sortData(data);

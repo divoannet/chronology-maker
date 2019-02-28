@@ -18,7 +18,7 @@ async function chronologyMaker() {
         const data = await loadData();
 
         // обновление данных
-        await scrapDomain(data);
+        return await scrapDomain(data);
     }
     catch (err) {
         console.log('--------------------'.red);
@@ -27,9 +27,9 @@ async function chronologyMaker() {
     }
 };
 
-chronologyMaker().then(() => {
+chronologyMaker().then((result) => {
     
-    fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(syncResult, null, 4)), err => {
+    fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(result, null, 4)), err => {
         if (err) console.log(err);
     };
       
