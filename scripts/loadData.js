@@ -12,7 +12,7 @@ module.exports = async function loadData() {
             }
             return await new Buffer(data);
         });
-        return data;
+        return JSON.parse(data);
     } else {
         const dirPath = path.resolve(__dirname, '../data');
         if (!fs.existsSync(dirPath)) {

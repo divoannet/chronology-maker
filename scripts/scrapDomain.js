@@ -5,7 +5,7 @@ const cheerio = require("cheerio");
 
 const config = require("../configs").configBuilder;
 
-const { getForumTopic } = require('./helpers');
+const { getForumTopic, getForumTopicsByPages, sortData } = require('./helpers');
 
 module.exports = async function scrapDomain(oldData) {
     console.log(' ');
@@ -25,9 +25,13 @@ module.exports = async function scrapDomain(oldData) {
         const pagesCount = +$(pageLinks[pageLinks.length - 1]).text() || 1;
 
         topicList = topicList.concat(getForumTopic($, forums[i]));
-
+        console.log(`   forum ${i} | ${url}`.grey);
+        if (1 === pagesCount) {
+            console.log(`   `);
+        }
+    
         if (pagesCount > 1) {
-            const forumTopics = await getForumTopicsByPages(forums[i], pagesCount);
+            const forumTopics = await getForumTopicsByPages(forums[i], pagesCount, i);
             topicList = topicList.concat(forumTopics);
         }
     }
@@ -45,19 +49,19 @@ module.exports = async function scrapDomain(oldData) {
         if (!oldTopic) {
             if (!newTopic.remove) {
                 data.push(newTopic);
-                console.log(`   [add]: ${newTopic.title} | ${newTopic.url}`);
+                console.log(`   [add]: ${newTopic.url}  |  ${newTopic.title}`);
             }
             return;
         }
 
         if (newTopic.remove) {
             data.splice(index, 1);
-            console.log(`   [remove]: ${newTopic.title} | ${newTopic.url}`.yellow);
+            console.log(`   [remove]: ${newTopic.url}  |  ${newTopic.title} `.yellow);
             return;
         }
 
         if (oldTopic.status !== newTopic.status) {
-            console.log(`   [update]: ${newTopic.title} | ${newTopic.url} | ${oldTopic.status} => ${newTopic.status}`.green);
+            console.log(`   [update]: ${newTopic.url}  |  ${newTopic.title} | ${oldTopic.status} => ${newTopic.status}`.green);
             oldTopic.status = newTopic.status;
             return;
         }
@@ -66,23 +70,37 @@ module.exports = async function scrapDomain(oldData) {
     console.log(`   `);
     console.log(`3. Update characters`);
 
-    for (let i = 0; i < data.length, i++) {
+    for (let i = 0; i < data.length; i++) {
         const topic = data[i];
         if (!topic.url || topic.url === '') {
-            return;
+            continue;
         }
 
+        if (topic.characters && !config.updateStatus.includes(topic.status)) {
+            continue;
+        }
 
+        if (!topic.characters) {
+            topic.characters = [];
+        }
+
+        const topicData = await needle('get', topic.url);
+        const $ = cheerio.load(topicData.body);
+
+        $('.pa-author').each((i, el) => {
+            if (i === 0) return;
+
+            const author = $(el).text().substring(7);
+            const character = config.replace && Object.keys(config.replace).includes(author)
+                ? config.replace[author]
+                : author;
+
+            if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
+                console.log(`   [add]: ${topic.url}  |  ${character} to topic ${topic.title}`);
+                topic.characters.push(character);
+            }
+        });
     }
 
-}
-
-async function getForumTopicsByPages(forum, pagesCount) {
-    let data = [];
-    for (let i = 2; i <= pagesCount; i++) {
-        const forumData = await needle("get", `${forum.url}&p=${i}`);
-        const $ = cheerio.load(forumData.body);
-        data = data.concat(getForumTopic($, forum));
-    }
-    return data;
+    return sortData(data);
 }
