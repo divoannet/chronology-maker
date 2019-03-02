@@ -109,10 +109,17 @@ function sortData(data) {
           return topic.date && topic.date !== '';
       })
       .sort((topicA, topicB) => {
-          // a > b return 1
-          if (topicA === topicB) {
-              console.log("\x1b[32m", `Same date ${topicA}`);
-          }
+        if (topicA.date === topicB.date) {
+            const timeA = +topicA.order || 0;
+            const timeB = +topicB.order || 0;
+
+            if (timeB > timeA) {
+                return 1;
+            }
+            if (timeB < timeA) {
+                return -1;
+            }
+        }
 
           let dateA = topicA.date.split('.');
           let dateB = topicB.date.split('.');
