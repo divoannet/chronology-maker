@@ -7,9 +7,9 @@ const config = require("../configs").configBuilder;
 const outputPath = `../data/${config.forumName}.json`;
 
 const loadData = require('./loadData.js');
-const scrapDomain = require('./scrapDomain.js');
+const {sortData} = require('./helpers.js');
 
-async function chronologyMaker() {
+async function sort() {
     console.log('Начинаю работу');
     console.log('----------------');
 
@@ -18,7 +18,7 @@ async function chronologyMaker() {
         const data = await loadData();
 
         // обновление данных
-        const result = await scrapDomain(data);
+        const result = await sortData(data);
 
         fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(result, null, 4)), err => {
             if (err) console.log(err);
@@ -32,7 +32,7 @@ async function chronologyMaker() {
     }
 };
 
-chronologyMaker().then(() => {      
+sort().then(() => {      
     console.log(' ');
     console.log('----------------');
     console.log('Готово');

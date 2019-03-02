@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node scripts/index.js"
+    "start": "node scripts/index.js",
+    "sort": "node scripts/sortData.js"
   },
   "author": "",
   "license": "ISC",

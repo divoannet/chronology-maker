@@ -88,7 +88,7 @@ function formatDate(dateMatch, fullTitle, url, forum) {
     const isHumanDate = arr.length === 3;
 
     const dateCenture = config.dateCenture || '20';
-    const year = arr.slice(-1);
+    const year = arr.splice(-1)[0];
     const fullYear = year.length === 2 ? year.padStart(4, dateCenture) : year;
 
     return isHumanDate
