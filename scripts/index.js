@@ -23,7 +23,7 @@ async function chronologyMaker() {
         fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(result, null, 4)), err => {
             if (err) console.log(err);
         };
-    
+        
     }
     catch (err) {
         console.log('--------------------'.red);

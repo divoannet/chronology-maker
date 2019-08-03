@@ -39,6 +39,8 @@ module.exports = async function scrapDomain(oldData) {
     console.log(`   `);
     console.log(`2. Update topics`);
 
+    const removeTopics = [];
+
     topicList.forEach((newTopic, index) => {
         if (Array.isArray(config.ignore) && config.ignore.includes(newTopic.url)) {
             return;
@@ -55,7 +57,7 @@ module.exports = async function scrapDomain(oldData) {
         }
 
         if (newTopic.remove) {
-            data.splice(index, 1);
+            removeTopics.push(newTopic.url);
             console.log(`   [remove]: ${newTopic.url}  |  ${newTopic.title} `.yellow);
             return;
         }
@@ -66,6 +68,8 @@ module.exports = async function scrapDomain(oldData) {
             return;
         }
     });
+
+    topicList = topicList.filter(topic => !removeTopics.contains(topic.url));
 
     console.log(`   `);
     console.log(`3. Update characters`);
@@ -114,6 +118,10 @@ module.exports = async function scrapDomain(oldData) {
         if (topic.characters.length < 2) {
             console.log(`   ${topic.url}  |  in ${topic.title} only ${topic.characters} character/s`);
         }
+    }
+
+    if (!config.formatDate) {
+        return data;
     }
 
     return sortData(data);
