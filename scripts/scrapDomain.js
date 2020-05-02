@@ -51,72 +51,80 @@ module.exports = async function scrapDomain(oldData) {
         if (!oldTopic) {
             if (!newTopic.remove) {
                 data.push(newTopic);
-                console.log(`   [add]: ${newTopic.url}  |  ${newTopic.title}`);
+                console.log(`   [add]: ${newTopic.url}  |  «${newTopic.title}»`);
             }
             return;
         }
 
         if (newTopic.remove) {
             removeTopics.push(newTopic.url);
-            console.log(`   [remove]: ${newTopic.url}  |  ${newTopic.title} `.yellow);
+            console.log(`   [remove]: ${newTopic.url}  |  «${newTopic.title}» `.yellow);
             return;
         }
 
         if (oldTopic.status !== newTopic.status) {
-            console.log(`   [update]: ${newTopic.url}  |  ${newTopic.title} | ${oldTopic.status} => ${newTopic.status}`.green);
+            console.log(`   [update]: ${newTopic.url}  |  «${newTopic.title}» | ${oldTopic.status} => ${newTopic.status}`.green);
             oldTopic.status = newTopic.status;
             return;
         }
     });
 
-    topicList = topicList.filter(topic => !removeTopics.contains(topic.url));
+    topicList = topicList.filter(topic => !removeTopics.includes(topic.url));
 
-    console.log(`   `);
-    console.log(`3. Update characters`);
+    if (! process.argv.includes('nousers')) {
+        console.log(`   `);
+        console.log(`3. Update characters`);
+    
+        let percentes = 0;
 
-    let percentes = 0;
-
-    for (let i = 0; i < data.length; i++) {
-        const progress = Math.round((100 * i) / data.length);
-        if (progress >= percentes + 10 && progress !== percentes) {
-            console.log(`      ${progress}%`.grey);
-            percentes = progress;
-        }
-
-        const topic = data[i];
-        if (!topic.url || topic.url === '') {
-            continue;
-        }
-
-        if (topic.characters && !config.updateStatus.includes(topic.status)) {
-            if (topic.characters.length < 2) {
-                console.log(`   ${topic.url}  |  in ${topic.title} only ${topic.characters} character/s`);
+        for (let i = 0; i < data.length; i++) {
+            const progress = Math.round((100 * i) / data.length);
+            if (progress >= percentes + 10 && progress !== percentes) {
+                console.log(`      ${progress}%`.grey);
+                percentes = progress;
             }
-            continue;
-        }
-
-        if (!topic.characters) {
-            topic.characters = [];
-        }
-
-        const topicData = await needle('get', topic.url);
-        const $ = cheerio.load(topicData.body);
-
-        $('.pa-author').each((i, el) => {
-            if (i === 0) return;
-
-            const author = $(el).text().substring(7);
-            const character = config.replace && Object.keys(config.replace).includes(author)
-                ? config.replace[author]
-                : author;
-
-            if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
-                console.log(`   [add]: ${topic.url}  |  ${character} to topic ${topic.title}`);
-                topic.characters.push(character);
+    
+            const topic = data[i];
+            if (!topic.url || topic.url === '') {
+                continue;
             }
-        });
-        if (topic.characters.length < 2) {
-            console.log(`   ${topic.url}  |  in ${topic.title} only ${topic.characters} character/s`);
+    
+            if (topic.characters && !config.updateStatus.includes(topic.status)) {
+                if (topic.characters.length === 1) {
+                    console.log(`   ${topic.url}  |  in «${topic.title}» only ${topic.characters} character/s`);
+                }
+                if (topic.characters.length === 0) {
+                    console.log(`   ${topic.url}  |  in «${topic.title}» there are no characters`);
+                }
+                    continue;
+            }
+    
+            if (!topic.characters) {
+                topic.characters = [];
+            }
+    
+            const topicData = await needle('get', topic.url);
+            const $ = cheerio.load(topicData.body);
+    
+            $('.pa-author').each((i, el) => {
+                if (i === 0) return;
+    
+                const author = $(el).text().substring(7);
+                const character = config.replace && Object.keys(config.replace).includes(author)
+                    ? config.replace[author]
+                    : author;
+    
+                if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
+                    console.log(`   [add]: ${topic.url}  |  ${character} to topic «${topic.title}»`);
+                    topic.characters.push(character);
+                }
+            });
+            if (topic.characters.length === 1) {
+                console.log(`   ${topic.url}  |  in «${topic.title}» only ${topic.characters} character/s`);
+            }
+            if (topic.characters.length === 0) {
+                console.log(`   ${topic.url}  |  in «${topic.title}» there are no characters`);
+            }
         }
     }
 
