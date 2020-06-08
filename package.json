@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node scripts/index.js",
     "update": "node scripts/index.js nousers",
-    "sort": "node scripts/sortData.js"
+    "sort": "node scripts/sortData.js",
+    "count": "node scripts/countPosts.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +15,7 @@
     "cheerio": "^1.0.0-rc.2",
     "colors": "^1.3.3",
     "dotenv": "^6.2.0",
+    "moment": "^2.26.0",
     "needle": "^2.2.4"
   }
 }
