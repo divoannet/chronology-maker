@@ -46,21 +46,27 @@ async function countPosts() {
         }
     }
 
+    const topicsLinks = [];
     for (let i = 0; i < topics.length; i++) {
         const topicData = await needle("get", topics[i]);
         const $$ = cheerio.load(topicData.body);
 
         const dateStrings = $$('.permalink');
+        let topicLink;
 
         dateStrings.each((key, date) => {
             const dateString = $$(date).text().split(' ')[0];
             const topicDate = getDate(dateString);
             if (topicDate.isBetween(startDate, endDate)) {
+                if (! topicLink) {
+                    topicsLinks.push($$(date).attr('href'))
+                }
+                topicLink = topicLink || $$(date).attr('href');
                 result += 1;
             }
         })
     }
-
+    console.log(topicsLinks);
     return result;
 }
 
