@@ -55,6 +55,8 @@ async function countPosts() {
         let topicLink;
 
         dateStrings.each((key, date) => {
+            if (key === 0) return;
+
             const dateString = $$(date).text().split(' ')[0];
             const topicDate = getDate(dateString);
             if (topicDate.isBetween(startDate, endDate)) {
