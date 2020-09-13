@@ -68,7 +68,8 @@ async function countPosts() {
             }
         })
     }
-    console.log(topicsLinks);
+    console.log(' ');
+    console.log(topicsLinks.join('\n'));
     return result;
 }
 
