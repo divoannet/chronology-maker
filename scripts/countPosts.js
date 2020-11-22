@@ -13,7 +13,7 @@ async function countPosts() {
     const forums = config.forums;
 
     const startDate = moment(process.argv[2], 'DD.MM.YY');
-    const endDate = moment(process.argv[3], 'DD.MM.YY');
+    const endDate = moment(process.argv[3], 'DD.MM.YY').endOf('day');
 
     if (! startDate.isValid() || ! endDate.isValid() || endDate.isBefore(startDate)) {
         console.log('Некорректная дата');
