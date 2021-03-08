@@ -50,7 +50,19 @@ module.exports = async function scrapDomain(oldData) {
 
         if (!oldTopic) {
             if (!newTopic.remove) {
-                data.push(newTopic);
+                data.push({
+                    url: newTopic.url,
+                    title: newTopic.title,
+                    date: newTopic.date,
+                    order: 0,
+                    visibleDate: null,
+                    text: '',
+                    fulltext: '',
+                    characters: [],
+                    categories: [],
+                    status: newTopic.status,
+                    story: []
+                });
                 console.log(`   [add]: ${newTopic.url}  |  «${newTopic.title}»`);
             }
             return;

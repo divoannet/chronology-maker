@@ -144,8 +144,25 @@ function sortData(data) {
       });
 }
 
+function fixContract(data) {
+  return data.map(item => ({
+    url: item.url,
+    title: item.title,
+    date: item.date,
+    order: item.order,
+    visibleDate: item.visibleDate,
+    text: item.text,
+    fulltext: item.fulltext,
+    characters: item.characters,
+    categories: item.categories,
+    status: item.status,
+    story: item.story,
+  }))
+}
+
 module.exports = {
     getForumTopic,
     getForumTopicsByPages,
-    sortData
+    sortData,
+    fixContract,
 };
