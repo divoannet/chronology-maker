@@ -61,7 +61,10 @@ async function countPosts() {
             const topicDate = getDate(dateString);
             if (topicDate.isBetween(startDate, endDate)) {
                 if (! topicLink) {
-                    topicsLinks.push($$(date).attr('href'))
+                    const [href, tail] = $$(date).attr('href').split('?')
+                    const pid = tail.split('#')[1].substring(1)
+
+                    topicsLinks.push(`${href}?pid=${pid}#p${pid}`)
                 }
                 topicLink = topicLink || $$(date).attr('href');
                 result += 1;
