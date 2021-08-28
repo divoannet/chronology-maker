@@ -57,7 +57,7 @@ module.exports = async function scrapDomain(oldData) {
                     order: 0,
                     visibleDate: null,
                     text: '',
-                    fulltext: '',
+                    fullText: '',
                     characters: [],
                     categories: [],
                     status: newTopic.status,
@@ -128,7 +128,7 @@ module.exports = async function scrapDomain(oldData) {
     
                 if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
                     console.log(`   [add]: ${topic.url}  |  ${character} to topic «${topic.title}»`);
-                    topic.characters.push(character);
+                    // topic.characters.push(character);
                 }
             });
             if (topic.characters.length === 1) {
