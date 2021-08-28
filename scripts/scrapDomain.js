@@ -55,7 +55,7 @@ module.exports = async function scrapDomain(oldData) {
                     title: newTopic.title,
                     date: newTopic.date,
                     order: 0,
-                    visibleDate: null,
+                    visibleDate: newTopic.visibleDate,
                     text: '',
                     fullText: '',
                     characters: [],
