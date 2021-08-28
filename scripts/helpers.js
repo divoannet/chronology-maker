@@ -17,7 +17,7 @@ function getForumTopic($, forum) {
         return;
       }
       const fullTitle = $(link).text();
-      const dateMatch = fullTitle.match(/(\d{1,2}\.)?\d{1,2}\.\d{1,4}/);
+      const dateMatch = fullTitle.match(/(\d{1,2}\.)?\d{1,2} \d{1,2}:\d{1,2} \D{1,2}/);
       const date = formatDate(dateMatch, fullTitle, url, forum);
       data.push({
         status: forum.id,
@@ -68,37 +68,20 @@ function formatDate(dateMatch, fullTitle, url, forum) {
           date: ''
         };
     }
-    const date = dateMatch[0];
+    const dateString = dateMatch[0];
 
     if (!config.formatDate) {
         return {
-          date: date
+          date: dateString
         };
     }
 
-    const arr = date.split('.');
+    const date = dateString.replace(':', '').replace(':', '').replace(/ \D{2}$/, '').replace(' ', '.');
 
-    if (arr.length === 1) {
-        return {
-          date: '',
-          visibleDate: date
-        };
-    }
-
-    const isHumanDate = arr.length === 3;
-
-    const dateCenture = config.dateCenture || '20';
-    const year = arr.splice(-1)[0];
-    const fullYear = year.length === 2 ? year.padStart(4, dateCenture) : year;
-
-    return isHumanDate
-      ? {
-        date: `${arr.join('.')}.${fullYear}`
-      }
-      : {
-        date: `${arr.join('.')}.${fullYear}`,
-        visibleDate: `${arr.slice(Math.max(arr.length - 2, 0)).join('.')}.${fullYear}`
-      }
+    return {
+      date: date,
+      visibleDate: dateString
+    };
 }
 
 // SORT
