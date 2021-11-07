@@ -12,8 +12,10 @@ async function countPosts() {
 
     const forums = config.forums;
 
-    const startDate = moment(process.argv[2], 'DD.MM.YY');
+    const startDate = moment(process.argv[2], 'DD.MM.YY').startOf('day');
     const endDate = moment(process.argv[3], 'DD.MM.YY').endOf('day');
+    const notSkipDoubles = process.argv.includes('--noskip');
+    const countStats = process.argv.includes('--stats');
 
     if (! startDate.isValid() || ! endDate.isValid() || endDate.isBefore(startDate)) {
         console.log('Некорректная дата');
@@ -47,6 +49,7 @@ async function countPosts() {
     }
 
     const topicsLinks = [];
+    const authors = {};
     for (let i = 0; i < topics.length; i++) {
         const topicData = await needle("get", topics[i]);
         const $$ = cheerio.load(topicData.body);
@@ -57,10 +60,17 @@ async function countPosts() {
         dateStrings.each((key, date) => {
             if (key === 0) return;
 
-            const dateString = $$(date).text().split(' ')[0];
+            const dateString = $$(date).text();
             const topicDate = getDate(dateString);
             if (topicDate.isBetween(startDate, endDate)) {
-                if (! topicLink) {
+                const parentPost = $$(date).closest('.post');
+                const author = $$(parentPost).find('.pa-author a').text();
+                if (authors[author]) {
+                    authors[author] += 1;
+                } else {
+                    authors[author] = 1;
+                }
+                if (! topicLink || notSkipDoubles) {
                     const [href, tail] = $$(date).attr('href').split('?')
                     const pid = tail.split('#')[1].substring(1)
 
@@ -73,18 +83,22 @@ async function countPosts() {
     }
     console.log(' ');
     console.log(topicsLinks.join('\n'));
+    console.log(' ');
+    if (countStats) {
+        console.log(`Написали постов с ${moment(startDate).format('DD.MM.YY')} по ${moment(endDate).format('DD.MM.YY')}:`);
+        Object.entries(authors).forEach(([author, count]) => {
+            console.log(`${author}: ${count}`)
+        });
+    }
     return result;
 }
 
 function getDate(dateString) {
-    switch (dateString) {
-        case 'Сегодня':
-            return moment().startOf('day');
-        case 'Вчера':
-            return moment().subtract(1, 'day').startOf('day');
-        default:
-            return moment(dateString, 'DD.MM.YYYY');
-    }
+    const string = dateString
+        .replace('Сегодня', moment().format('DD.MM.YY'))
+        .replace('Вчера', moment().subtract(1, 'day').format('DD.MM.YY'));
+
+    return moment(string, 'DD.MM.YYYY HH:mm');
 }
 
 countPosts().then(count => {      
