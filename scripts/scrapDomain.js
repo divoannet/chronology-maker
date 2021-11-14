@@ -1,11 +1,9 @@
-const fs = require('fs');
-const path = require('path');
 const needle = require("needle");
 const cheerio = require("cheerio");
 
 const config = require("../configs").configBuilder;
 
-const { getForumTopic, getForumTopicsByPages, sortData } = require('./helpers');
+const { getForumTopic, getDefaultValueByType, sortData } = require('./helpers');
 
 module.exports = async function scrapDomain(oldData) {
     console.log(' ');
@@ -39,19 +37,21 @@ module.exports = async function scrapDomain(oldData) {
 
         if (!oldTopic) {
             if (!newTopic.remove) {
-                data.push({
-                    url: newTopic.url,
+                const addTopic = {
+                    status: newTopic.status,
                     title: newTopic.title,
+                    url: newTopic.url,
                     date: newTopic.date,
                     order: 0,
-                    visibleDate: null,
-                    text: '',
-                    fullText: '',
                     characters: [],
-                    categories: [],
-                    status: newTopic.status,
-                    story: []
-                });
+                };
+                if (config.additionalFields) {
+                    config.additionalFields
+                      .forEach(({name, type}) => {
+                          addTopic[name] = getDefaultValueByType(type);
+                      })
+                }
+                data.push(addTopic);
                 console.log(`   [add]: ${newTopic.url}  |  «${newTopic.title}»`);
             }
             return;

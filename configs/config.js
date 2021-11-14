@@ -19,6 +19,12 @@ module.exports = {
             remove: true
         }
     ],
+    "additionalFields": [
+        {
+            name: 'description',
+            type: 'string',
+        },
+    ],
     "replace": {
         "oldCharName": "newCharName"
     },

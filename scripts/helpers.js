@@ -144,20 +144,37 @@ function sortData(data) {
       });
 }
 
+const getDefaultValueByType = (type) => {
+  switch (type) {
+    case 'string':
+      return '';
+    case 'array':
+      return [];
+    case 'object':
+      return {};
+    default:
+      return null;
+  }
+}
+
 function fixContract(data) {
-  return data.map(item => ({
-    url: item.url,
-    title: item.title,
-    date: item.date,
-    order: item.order,
-    visibleDate: item.visibleDate,
-    text: item.text,
-    fulltext: item.fulltext,
-    characters: item.characters,
-    categories: item.categories,
-    status: item.status,
-    story: item.story,
-  }))
+  return data.map(item => {
+    const fixedItem = {
+      status: item.status,
+      title: item.title,
+      url: item.url,
+      date: item.date,
+      order: item.order,
+      characters: item.characters,
+    };
+    if (config.additionalFields) {
+      config.additionalFields
+        .forEach(({name, type}) => {
+          fixedItem[name] = item[name] || getDefaultValueByType(type);
+        })
+    }
+    return fixedItem;
+  })
 }
 
 module.exports = {
@@ -165,4 +182,5 @@ module.exports = {
     getForumTopicsByPages,
     sortData,
     fixContract,
+    getDefaultValueByType,
 };
