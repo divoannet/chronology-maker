@@ -6,10 +6,7 @@ const config = require("../configs").configBuilder;
 const { getForumTopic, getDefaultValueByType, sortData } = require('./helpers');
 
 module.exports = async function scrapDomain(oldData) {
-    console.log(' ');
-    console.log('1. Scrap');
-
-    const data = [...oldData];
+    let data = [...oldData];
 
     let topicList = [];
     const forums = config.forums;
@@ -20,11 +17,7 @@ module.exports = async function scrapDomain(oldData) {
         const $ = cheerio.load(forumData.body);
 
         topicList = topicList.concat(getForumTopic($, forums[i]));
-        console.log(`   forum ${i} | ${url}`.grey);
     }
-
-    console.log(`   `);
-    console.log(`2. Update topics`);
 
     const removeTopics = [];
 
@@ -72,10 +65,7 @@ module.exports = async function scrapDomain(oldData) {
 
     const cleanedData = data.filter(topic => !removeTopics.includes(topic.url));
 
-    if (! process.argv.includes('nousers')) {
-        console.log(`   `);
-        console.log(`3. Update characters`);
-    
+    if (!process.argv.includes('nousers')) {
         let percentes = 0;
 
         for (let i = 0; i < cleanedData.length; i++) {
@@ -116,7 +106,7 @@ module.exports = async function scrapDomain(oldData) {
                     : author;
     
                 if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
-                    console.log(`   [add]: ${topic.url}  |  ${character} to topic «${topic.title}»`);
+                    console.log(`   [add character]: ${topic.url}  |  ${character} to topic «${topic.title}»`);
                     topic.characters.push(character);
                 }
             });

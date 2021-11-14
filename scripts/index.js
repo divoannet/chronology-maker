@@ -9,9 +9,19 @@ const outputPath = `../data/${config.forumName}.json`;
 const loadData = require('./loadData.js');
 const scrapDomain = require('./scrapDomain.js');
 
+const formatter = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short',
+})
+
 async function chronologyMaker() {
-    console.log('Начинаю работу');
-    console.log('----------------');
+    console.log(`Начало работы: ${formatter.format(new Date())}`);
 
     try {
         // загрузка уже сохранённых данных
@@ -26,15 +36,11 @@ async function chronologyMaker() {
         
     }
     catch (err) {
-        console.log('--------------------'.red);
-        console.log(`>>> ${err.message} <<<`.red);
-        console.log('--------------------'.red);
+        console.log('Ошибка');
+        console.log(err);
     }
 };
 
 chronologyMaker().then(() => {      
-    console.log(' ');
-    console.log('----------------');
-    console.log('Готово');
-    console.log(' ');
+    console.log(`Окончание работы: ${formatter.format(new Date())}\n`);
 });
