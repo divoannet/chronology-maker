@@ -18,22 +18,11 @@ module.exports = async function scrapDomain(oldData) {
     for (let i = 0; i < forums.length; i++) {
         const {url} = forums[i];
 
-        const forumData = await needle("get", url);
+        const forumData = await needle("get", `${url}&p=-1`);
         const $ = cheerio.load(forumData.body);
-
-        const pageLinks = $(".linkst .pagelink a:not([class])");
-        const pagesCount = +$(pageLinks[pageLinks.length - 1]).text() || 1;
 
         topicList = topicList.concat(getForumTopic($, forums[i]));
         console.log(`   forum ${i} | ${url}`.grey);
-        if (1 === pagesCount) {
-            console.log(`   `);
-        }
-    
-        if (pagesCount > 1) {
-            const forumTopics = await getForumTopicsByPages(forums[i], pagesCount, i);
-            topicList = topicList.concat(forumTopics);
-        }
     }
 
     console.log(`   `);
@@ -81,7 +70,7 @@ module.exports = async function scrapDomain(oldData) {
         }
     });
 
-    topicList = topicList.filter(topic => !removeTopics.includes(topic.url));
+    const cleanedData = data.filter(topic => !removeTopics.includes(topic.url));
 
     if (! process.argv.includes('nousers')) {
         console.log(`   `);
@@ -89,14 +78,14 @@ module.exports = async function scrapDomain(oldData) {
     
         let percentes = 0;
 
-        for (let i = 0; i < data.length; i++) {
-            const progress = Math.round((100 * i) / data.length);
+        for (let i = 0; i < cleanedData.length; i++) {
+            const progress = Math.round((100 * i) / cleanedData.length);
             if (progress >= percentes + 10 && progress !== percentes) {
                 console.log(`      ${progress}%`.grey);
                 percentes = progress;
             }
     
-            const topic = data[i];
+            const topic = cleanedData[i];
             if (!topic.url || topic.url === '') {
                 continue;
             }
@@ -128,21 +117,15 @@ module.exports = async function scrapDomain(oldData) {
     
                 if (!topic.characters.includes(character) && !config.ignoreUsers.includes(character)) {
                     console.log(`   [add]: ${topic.url}  |  ${character} to topic «${topic.title}»`);
-                    // topic.characters.push(character);
+                    topic.characters.push(character);
                 }
             });
-            if (topic.characters.length === 1) {
-                console.log(`   ${topic.url}  |  in «${topic.title}» only ${topic.characters} character/s`);
-            }
-            if (topic.characters.length === 0) {
-                console.log(`   ${topic.url}  |  in «${topic.title}» there are no characters`);
-            }
         }
     }
 
     if (!config.formatDate) {
-        return data;
+        return cleanedData;
     }
 
-    return sortData(data);
+    return sortData(cleanedData);
 }
