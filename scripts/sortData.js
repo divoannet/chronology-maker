@@ -19,8 +19,7 @@ async function sort() {
 
         // обновление данных
         const result = await fixContract(data);
-
-        const sortedData = sortData(result);
+        const sortedData = await sortData(result);
 
         fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(sortedData, null, 4)), err => {
             if (err) console.log(err);

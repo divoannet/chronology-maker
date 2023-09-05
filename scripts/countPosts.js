@@ -14,8 +14,9 @@ async function countPosts() {
 
     const startDate = moment(process.argv[2], 'DD.MM.YY').startOf('day');
     const endDate = moment(process.argv[3], 'DD.MM.YY').endOf('day');
-    const notSkipDoubles = process.argv.includes('--noskip');
-    const countStats = process.argv.includes('--stats');
+    const notSkipDoubles = process.argv.includes('full');
+    const countStats = process.argv.includes('stat');
+    const needRandomize = process.argv.includes('r');
 
     if (! startDate.isValid() || ! endDate.isValid() || endDate.isBefore(startDate)) {
         console.log('Некорректная дата');
@@ -48,7 +49,7 @@ async function countPosts() {
         }
     }
 
-    const topicsLinks = [];
+    let topicsLinks = [];
     const authors = {};
     for (let i = 0; i < topics.length; i++) {
         const topicData = await needle("get", topics[i]);
@@ -81,6 +82,9 @@ async function countPosts() {
             }
         })
     }
+    if (needRandomize) {
+        topicsLinks = shuffle(topicsLinks);
+    }
     console.log(' ');
     console.log(topicsLinks.join('\n'));
     console.log(' ');
@@ -94,12 +98,32 @@ async function countPosts() {
 }
 
 function getDate(dateString) {
+    const format = config.systemDateFormat || 'DD.MM.YYYY HH:mm';
+    const dateFormat = format.split(' ')[0];
     const string = dateString
-        .replace('Сегодня', moment().format('DD.MM.YY'))
-        .replace('Вчера', moment().subtract(1, 'day').format('DD.MM.YY'));
+        .replace('Сегодня', moment().format(dateFormat))
+        .replace('Вчера', moment().subtract(1, 'day').format(dateFormat));
 
-    return moment(string, 'DD.MM.YYYY HH:mm');
+    return moment(string, format);
 }
+
+function shuffle(array) {
+    let currentIndex = array.length,  randomIndex;
+  
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element...
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  
+    return array;
+  }
 
 countPosts().then(count => {      
     console.log(' ');
