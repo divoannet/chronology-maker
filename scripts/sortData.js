@@ -7,7 +7,7 @@ const config = require("../configs").configBuilder;
 const outputPath = `../data/${config.forumName}.json`;
 
 const loadData = require('./loadData.js');
-const {fixContract} = require('./helpers.js');
+const {fixContract, sortData} = require('./helpers.js');
 
 async function sort() {
     console.log('Начинаю работу');
@@ -20,7 +20,9 @@ async function sort() {
         // обновление данных
         const result = await fixContract(data);
 
-        fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(result, null, 4)), err => {
+        const sortedData = sortData(result);
+
+        fs.writeFileSync(path.resolve(__dirname, outputPath), JSON.stringify(sortedData, null, 4)), err => {
             if (err) console.log(err);
         };
     

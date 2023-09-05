@@ -4,20 +4,50 @@ const cheerio = require("cheerio");
 const config = require("../configs").configBuilder;
 
 const { getForumTopic, getDefaultValueByType, sortData } = require('./helpers');
+const { loginToBoard } = require('./login');
+
+const requestForum = (url, params, options) => new Promise((resolve, reject) => {
+    needle.request("get", `${url}&p=-1`, params, options, (err, resp) => {
+        if (err) {
+            reject(err);
+        }
+        resolve(resp.body);
+    });
+})
+
+const getTopicList = async () => {
+    let topicList = [];
+    const forums = config.forums;
+
+    const loginHash = await loginToBoard();
+    const login = config.login;
+    const password = config.password;
+
+    const params = loginHash ? { login, password } : {};
+    const options = loginHash ? {
+        json: true,
+        headers: {
+            cookie: `mybb_ru=${loginHash}`,
+        }
+    } : {};
+
+    for (let i = 0; i < forums.length; i++) {
+        const {url} = forums[i];
+        let forumData = null;
+
+        const body = await requestForum(url, params, options);
+        const $ = cheerio.load(body);
+        topicList = topicList.concat(getForumTopic($, forums[i]));
+    }
+
+    return topicList;
+}
 
 module.exports = async function scrapDomain(oldData) {
     let data = [...oldData];
 
-    let topicList = [];
+    let topicList = await getTopicList();
     const forums = config.forums;
-    for (let i = 0; i < forums.length; i++) {
-        const {url} = forums[i];
-
-        const forumData = await needle("get", `${url}&p=-1`);
-        const $ = cheerio.load(forumData.body);
-
-        topicList = topicList.concat(getForumTopic($, forums[i]));
-    }
 
     const removeTopics = [];
 
@@ -52,12 +82,12 @@ module.exports = async function scrapDomain(oldData) {
 
         if (newTopic.remove) {
             removeTopics.push(newTopic.url);
-            console.log(`   [remove]: ${newTopic.url}  |  «${newTopic.title}» `.yellow);
+            console.log(`   [remove]: ${newTopic.url}  |  «${newTopic.title}» `);
             return;
         }
 
         if (oldTopic.status !== newTopic.status) {
-            console.log(`   [update]: ${newTopic.url}  |  «${newTopic.title}» | ${oldTopic.status} => ${newTopic.status}`.green);
+            console.log(`   [update]: ${newTopic.url}  |  «${newTopic.title}» | ${oldTopic.status} => ${newTopic.status}`);
             oldTopic.status = newTopic.status;
             return;
         }
