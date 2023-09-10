@@ -89,7 +89,8 @@ function formatDate(dateMatch, fullTitle, url, forum) {
 
     const dateCenture = config.dateCenture || '20';
     const year = arr.splice(-1)[0];
-    const fullYear = year.length === 2 ? year.padStart(4, dateCenture) : year;
+    const yearLength = dateCenture.length;
+    const fullYear = year.length < yearLength ? year.padStart(yearLength, dateCenture) : year;
 
     return isHumanDate
       ? {
@@ -105,10 +106,10 @@ function formatDate(dateMatch, fullTitle, url, forum) {
 
 function sortData(data) {
   return data
-      .filter(topic => {
-          return topic.date && topic.date !== '';
-      })
       .sort((topicA, topicB) => {
+        if (!topicA.date) return 1;
+        if (!topicB.date) return -1;
+
         if (topicA.date === topicB.date) {
             const timeA = +topicA.order || 0;
             const timeB = +topicB.order || 0;

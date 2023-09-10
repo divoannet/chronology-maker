@@ -5,6 +5,7 @@
 .env
 /configs/config.*.js
 /data
-
+/log
+script.sh
 custom.js
 package-lock.json
