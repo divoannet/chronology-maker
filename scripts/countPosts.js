@@ -57,7 +57,7 @@ async function countPosts() {
   const forumParams = new URLSearchParams({
     method: 'topic.get',
     forum_id: forumIds.join(','),
-    fields: 'id,subject,last_post_date,forum_id,closed',
+    fields: 'id,subject,last_post_date,forum_id,closed,init_post',
     sort_by: 'last_post',
     sort_dir: 'desc',
     limit: 100,
@@ -65,9 +65,11 @@ async function countPosts() {
 
   const response = await needlePromise('get', `${url}/api.php?${forumParams}`, {}, options);
 
-  const filteredTopics = response.filter(({ subject, last_post_date }) => {
+  const filteredTopics = response.filter(({ last_post_date }) => {
     return moment.unix(last_post_date).isBetween(startDate, endDate);
   });
+
+  const initPosts = filteredTopics.map(item => item.init_id);
 
   filteredTopics.forEach(forum => {
     report.topics[forum.id] = {
@@ -91,8 +93,8 @@ async function countPosts() {
 
   const topicResponse = await needlePromise('get', `${url}/api.php?${topicParams}`, {}, options);
 
-  const filteredPosts = topicResponse.filter(({ posted }) => {
-    return posted > startTime && posted < endTime;
+  const filteredPosts = topicResponse.filter(({ posted, id }) => {
+    return !initPosts.includes(id) && posted > startTime && posted < endTime;
   });
 
   console.log(' ');
