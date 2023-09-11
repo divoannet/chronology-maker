@@ -16,6 +16,31 @@ const needlePromise = async (method, url, options, params) => {
   });
 }
 
+const requestPosts = async (url, params, options, initPosts, startTime, endTime) => {
+  const result = [];
+
+  const urlParams = new URLSearchParams(params).toString();
+
+  const postsResponse = await needlePromise('get', `${url}/api.php?${urlParams}`, {}, options);
+
+  const filteredPosts = postsResponse.filter(({ posted, id }) => {
+    return !initPosts.includes(id) && posted > startTime && posted < endTime;
+  });
+
+
+  result.push(...filteredPosts);
+
+  if (filteredPosts.length > 90) {
+    const nextParams = {
+      ...params,
+      skip: options.skip ? options.skip + 100 : 100,
+    }
+    result.push(...await requestPosts(url, nextParams, options, initPosts, startTime, endTime));
+  }
+
+  return result;
+}
+
 async function countPosts() {
   console.log('Считаю посты');
   console.log('----------------');
@@ -26,6 +51,7 @@ async function countPosts() {
   }
 
   const forums = config.forums;
+  const forumUsers = config.users || [];
 
   const startDate = moment(process.argv[2], 'DD.MM.YY').startOf('day');
   const endDate = moment(process.argv[3], 'DD.MM.YY').endOf('day');
@@ -54,7 +80,7 @@ async function countPosts() {
     return forum?.url ? new URL(forum.url).searchParams.get('id') : ''
   });
 
-  const forumParams = new URLSearchParams({
+  const topicParams = new URLSearchParams({
     method: 'topic.get',
     forum_id: forumIds.join(','),
     fields: 'id,subject,last_post_date,forum_id,closed,init_post',
@@ -63,9 +89,9 @@ async function countPosts() {
     limit: 100,
   }).toString();
 
-  const response = await needlePromise('get', `${url}/api.php?${forumParams}`, {}, options);
+  const topicResponse = await needlePromise('get', `${url}/api.php?${topicParams}`, {}, options);
 
-  const filteredTopics = response.filter(({ last_post_date }) => {
+  const filteredTopics = topicResponse.filter(({ last_post_date }) => {
     return moment.unix(last_post_date).isBetween(startDate, endDate);
   });
 
@@ -82,20 +108,16 @@ async function countPosts() {
 
   const topicIds = filteredTopics.map(forum => forum.id);
 
-  const topicParams = new URLSearchParams({
+  const postsParams = {
     method: 'post.get',
     topic_id: topicIds.join(','),
     fields: 'id,username,posted,forum_id,topic_id',
     sort_by: 'posted',
     sort_dir: 'desc',
     limit: 100,
-  }).toString();
+  };
 
-  const topicResponse = await needlePromise('get', `${url}/api.php?${topicParams}`, {}, options);
-
-  const filteredPosts = topicResponse.filter(({ posted, id }) => {
-    return !initPosts.includes(id) && posted > startTime && posted < endTime;
-  });
+  const filteredPosts = await requestPosts(url, postsParams, options, initPosts, startTime, endTime);
 
   console.log(' ');
   filteredPosts.forEach(post => {
@@ -112,6 +134,7 @@ async function countPosts() {
     .map(topic => [topic.count, topic])
     .sort(([count1], [count2]) => count2 - count1)
     .map(([_,topic]) => topic);
+  console.log(`Активных эпизодов: ${sortedTopics.length}`);
   sortedTopics.forEach(topic => {
     topic.posts = topic.posts.sort((id1, id2) => id1 - id2);
     const log = notSkipDoubles
@@ -124,13 +147,38 @@ async function countPosts() {
 
   if (countStats) {
     console.log(`Написали постов с ${moment(startDate).format('DD.MM.YY')} по ${moment(endDate).format('DD.MM.YY')}:`);
-    const sortedUsers = Object.entries(report.users)
-      .map(([author, count]) => [count, author])
-      .sort(([count1], [count2]) => count2 - count1);
-    sortedUsers.forEach(([count, author]) => {
-      console.log(`${count} | ${author}`)
-    });
-    console.log(' ');
+
+    const uniqUsers = {};
+
+    Object.entries(report.users).forEach(([author, count]) => {
+      const rootUserArr = forumUsers.find(twinks => twinks.includes(author)) || [];
+      const rootUser = rootUserArr[0] || author;
+      if (uniqUsers[rootUser]) {
+        uniqUsers[rootUser].total += count;
+        uniqUsers[rootUser].twinks[author] = count;
+      }
+      else {
+        uniqUsers[rootUser] = {
+          total: count,
+          twinks: {
+            [author]: count,
+          },
+        }
+      }
+    })
+
+    const sortedUsers = Object.entries(uniqUsers)
+      .map(([user, data]) => ([user, data]))
+      .sort((item1, item2) => item2[1].total - item1[1].total);
+
+    sortedUsers.forEach(([author, data]) => {
+      console.log(`${data.total} | ${author}`);
+      if (Object.keys(data.twinks).length > 1 || Object.keys(data.twinks)[0] !== author) {
+        Object.entries(data.twinks).forEach(([twink, twinkCount], index) => {
+          console.log(`  ${twinkCount} | ${twink}`);
+        });
+      }
+    })
 
     if (notSkipDoubles) {
       const sortedTopics = Object.values(report.topics)
@@ -144,24 +192,6 @@ async function countPosts() {
   }
 
   return filteredPosts.length;
-}
-
-function shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
-
-  // While there remain elements to shuffle...
-  while (currentIndex != 0) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
-  }
-
-  return array;
 }
 
 countPosts().then(count => {
