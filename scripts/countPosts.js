@@ -1,6 +1,8 @@
 const needle = require("needle");
-const moment = require("moment");
 const {loginToBoard} = require("./login");
+
+const moment = require('moment-timezone');
+moment().tz("Europe/Moscow").format();
 
 const config = require("../configs").configBuilder;
 
@@ -83,7 +85,7 @@ async function countPosts() {
   const topicParams = new URLSearchParams({
     method: 'topic.get',
     forum_id: forumIds.join(','),
-    fields: 'id,subject,last_post_date,forum_id,closed,init_post',
+    fields: 'id,subject,last_post_date,forum_id,closed,init_post,num_replies',
     sort_by: 'last_post',
     sort_dir: 'desc',
     limit: 100,
@@ -91,9 +93,10 @@ async function countPosts() {
 
   const topicResponse = await needlePromise('get', `${url}/api.php?${topicParams}`, {}, options);
 
-  const filteredTopics = topicResponse.filter(({ last_post_date }) => {
-    return moment.unix(last_post_date).isBetween(startDate, endDate);
+  const filteredTopics = topicResponse.filter(({ last_post_date, num_replies }) => {
+    return num_replies !== '0' && moment.unix(last_post_date).isAfter(startDate);
   });
+
 
   const initPosts = filteredTopics.map(item => item.init_id);
 
@@ -131,6 +134,7 @@ async function countPosts() {
   });
 
   const sortedTopics = Object.values(report.topics)
+    .filter(topic => topic.posts.length > 0)
     .map(topic => [topic.count, topic])
     .sort(([count1], [count2]) => count2 - count1)
     .map(([_,topic]) => topic);
