@@ -18,6 +18,30 @@ const needlePromise = async (method, url, options, params) => {
   });
 }
 
+const requestTopics = async (url, params, options, startDate) => {
+  const result = [];
+
+  const urlParams = new URLSearchParams(params).toString();
+
+  const topicResponse = await needlePromise('get', `${url}/api.php?${urlParams}`, {}, options);
+
+  const filteredTopics = topicResponse.filter(({ last_post_date, num_replies }) => {
+    return num_replies !== '0' && moment.unix(last_post_date).isAfter(startDate);
+  });
+
+  result.push(...filteredTopics);
+
+  if (topicResponse.length === 100) {
+    const nextParams = {
+      ...params,
+      skip: params.skip ? params.skip + 100 : 100,
+    }
+    result.push(...await requestTopics(url, nextParams, options, startDate));
+  }
+
+  return result;
+}
+
 const requestPosts = async (url, params, options, initPosts, startTime, endTime) => {
   const result = [];
 
@@ -29,13 +53,15 @@ const requestPosts = async (url, params, options, initPosts, startTime, endTime)
     return !initPosts.includes(id) && posted > startTime && posted < endTime;
   });
 
-
   result.push(...filteredPosts);
 
-  if (filteredPosts.length > 90) {
+  if (
+    filteredPosts.length > 90
+    || (result.length === 0 && filteredPosts.length === 0)
+  ) {
     const nextParams = {
       ...params,
-      skip: options.skip ? options.skip + 100 : 100,
+      skip: params.skip ? params.skip + 100 : 100,
     }
     result.push(...await requestPosts(url, nextParams, options, initPosts, startTime, endTime));
   }
@@ -82,21 +108,16 @@ async function countPosts() {
     return forum?.url ? new URL(forum.url).searchParams.get('id') : ''
   });
 
-  const topicParams = new URLSearchParams({
+  const topicParams = {
     method: 'topic.get',
     forum_id: forumIds.join(','),
     fields: 'id,subject,last_post_date,forum_id,closed,init_post,num_replies',
     sort_by: 'last_post',
     sort_dir: 'desc',
     limit: 100,
-  }).toString();
+  };
 
-  const topicResponse = await needlePromise('get', `${url}/api.php?${topicParams}`, {}, options);
-
-  const filteredTopics = topicResponse.filter(({ last_post_date, num_replies }) => {
-    return num_replies !== '0' && moment.unix(last_post_date).isAfter(startDate);
-  });
-
+  const filteredTopics = await requestTopics(url, topicParams, options, startDate);
 
   const initPosts = filteredTopics.map(item => item.init_id);
 
