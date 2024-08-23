@@ -18,9 +18,12 @@ async function loginToBoard() {
     }).toString();
 
     try {
+        console.log(`> Логинюсь ${login}`);
         const response = await needle('get', `${url}/api.php?${params}`);
+        console.log('> Логин успешный')
         return response?.body?.response?.hash;
     } catch (error) {
+        console.log('> Не удалось залогиниться')
         throw error;
     }
 }

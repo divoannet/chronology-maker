@@ -69,7 +69,7 @@ const requestPosts = async (url, params, options, initPosts, startTime, endTime)
   return result;
 }
 
-async function countPosts() {
+async function countPosts(from, to, countStats) {
   console.log('Считаю посты');
   console.log('----------------');
 
@@ -77,14 +77,17 @@ async function countPosts() {
     users: {},
     topics: {},
   }
+  const response = {
+    users: {},
+    topics: {},
+  }
 
   const forums = config.forums;
   const forumUsers = config.users || [];
 
-  const startDate = moment(process.argv[2], 'DD.MM.YY').startOf('day');
-  const endDate = moment(process.argv[3], 'DD.MM.YY').endOf('day');
+  const startDate = moment(from, 'DD.MM.YY').startOf('day');
+  const endDate = moment(to, 'DD.MM.YY').endOf('day');
   const notSkipDoubles = process.argv.includes('full');
-  const countStats = process.argv.includes('stat');
 
   if (! startDate.isValid() || ! endDate.isValid() || endDate.isBefore(startDate)) {
     console.log('Некорректная дата');
@@ -117,6 +120,7 @@ async function countPosts() {
     limit: 100,
   };
 
+  console.log('> Запрашиваю данные форумов')
   const filteredTopics = await requestTopics(url, topicParams, options, startDate);
 
   const initPosts = filteredTopics.map(item => item.init_id);
@@ -141,6 +145,7 @@ async function countPosts() {
     limit: 100,
   };
 
+  console.log('> Запрашиваю посты')
   const filteredPosts = await requestPosts(url, postsParams, options, initPosts, startTime, endTime);
 
   console.log(' ');
@@ -159,14 +164,17 @@ async function countPosts() {
     .map(topic => [topic.count, topic])
     .sort(([count1], [count2]) => count2 - count1)
     .map(([_,topic]) => topic);
-  console.log(`Активных эпизодов: ${sortedTopics.length}`);
+  console.log(`Эпизодов: ${sortedTopics.length}`);
+  console.log(`Постов: ${filteredPosts.length}`);
   sortedTopics.forEach(topic => {
     topic.posts = topic.posts.sort((id1, id2) => id1 - id2);
     const log = notSkipDoubles
-      ? topic.posts.map(postId => `${url}/viewtopic.php?pid=${postId}#p${postId}`).join('\n')
-      : `${url}/viewtopic.php?pid=${topic.posts[0]}#p${topic.posts[0]} ${topic.count} ${topic.subject}`;
+      ? topic.posts.map(postId => `${url}viewtopic.php?pid=${postId}#p${postId}`).join('\n')
+      : `[${topic.count}] ${url}viewtopic.php?pid=${topic.posts[0]}#p${topic.posts[0]}`;
     console.log(log);
   });
+
+  response.topics = sortedTopics;
 
   console.log(' ');
 
@@ -196,6 +204,8 @@ async function countPosts() {
       .map(([user, data]) => ([user, data]))
       .sort((item1, item2) => item2[1].total - item1[1].total);
 
+    response.users = sortedUsers;
+
     sortedUsers.forEach(([author, data]) => {
       console.log(`${data.total} | ${author}`);
       if (Object.keys(data.twinks).length > 1 || Object.keys(data.twinks)[0] !== author) {
@@ -216,16 +226,21 @@ async function countPosts() {
     }
   }
 
-  return filteredPosts.length;
+  return response;
 }
 
-countPosts().then(count => {
-  console.log(' ');
-  console.log('----------------');
-  console.log(isNumber(count) ? 'Всех постов за период: ' + count : 'Выход с ошибкой');
-  console.log(' ');
+const from = process.argv[2];
+const to = process.argv[3];
+const countStats = process.argv.includes('stat');
+
+countPosts(from, to, countStats).then(res => {
+  console.log('Скрипт отработал');
 });
 
 function isNumber(value) {
   return typeof value === 'number' && isFinite(value);
+}
+
+module.exports = {
+  countPosts,
 }
