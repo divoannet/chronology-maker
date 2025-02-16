@@ -1,6 +1,7 @@
 const config = require("../configs").configBuilder;
 const needle = require("needle");
 const cheerio = require("cheerio");
+const moment = require("moment");
 
 // FORMAT DATA
 
@@ -178,10 +179,25 @@ function fixContract(data) {
   })
 }
 
+function getDate(date, format) {
+  const [dateString, timeString] = date.split(' ');
+  switch (dateString) {
+    case 'Сегодня':
+      const today = `${moment().format('YYYY-MM-DD')} ${timeString}`;
+      return moment(today, format);
+    case 'Вчера':
+      const yesterday = `${moment().format('YYYY-MM-DD')} ${timeString}`;
+      return moment(yesterday, format);
+    default:
+      return moment(date, format);
+  }
+}
+
 module.exports = {
     getForumTopic,
     getForumTopicsByPages,
     sortData,
+    getDate,
     fixContract,
     getDefaultValueByType,
 };
